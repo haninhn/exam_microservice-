@@ -11,6 +11,7 @@ const typeDefs = require('./schema'); // Import  GraphQL schema
 
 // Create a new Express application
 const app = express();
+app.use(bodyParser.json());
 
 // Load the proto files for the product and order microservices
 const productProtoPath = 'product.proto';
@@ -75,18 +76,19 @@ app.post('/products', (req, res) => {
     }
   });
 });
-
 // Define the gRPC endpoints for the order microservice
-app.get('/orders', (req, res) => {
+app.post('/orders', (req, res) => {
   const client = new orderProto.OrderService('localhost:50053', grpc.credentials.createInsecure());
-  client.getOrders({}, (err, response) => {
+  const { productId, quantity } = req.body; // Assuming the request body contains the order details
+  client.createOrder({ productId, quantity }, (err, response) => {
     if (err) {
       res.status(500).send(err);
     } else {
-      res.json(response.orders);
+      res.json(response.order);
     }
   });
 });
+
 
 app.get('/orders/:id', (req, res) => {
   const client = new orderProto.OrderService('localhost:50053', grpc.credentials.createInsecure());

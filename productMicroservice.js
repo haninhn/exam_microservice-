@@ -1,6 +1,6 @@
-// productMicroservice.js
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
+const mysql = require('mysql2/promise');
 
 // Load the product.proto file
 const productProtoPath = 'product.proto';
@@ -14,36 +14,74 @@ const productProtoDefinition = protoLoader.loadSync(productProtoPath, {
 const productProto = grpc.loadPackageDefinition(productProtoDefinition);
 const productService = productProto.ProductService;
 
+// Create a MySQL connection pool
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'order',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
 // Implement the product service
 const serviceImpl = {
-  createProduct: (call, callback) => {
-    // Logic to create a product
-    const product = {
-      id: '1',
-      name: call.request.name,
-      price: call.request.price,
-      description: call.request.description,
-    };
-    callback(null, { product });
+  createProduct: async (call, callback) => {
+    try {
+      const { name, price, description } = call.request;
+
+      // Insert product into MySQL database
+      const connection = await pool.getConnection();
+      const [result] = await connection.query('INSERT INTO products (name, price, description) VALUES (?, ?, ?)', [name, price, description]);
+      connection.release();
+
+      // Return the created product
+      const product = {
+        id: result.insertId,
+        name,
+        price,
+        description,
+      };
+      callback(null, { product });
+    } catch (error) {
+      console.error('Error creating product:', error);
+      callback(error);
+    }
   },
-  getProduct: (call, callback) => {
-    // Logic to get a product by ID
-    const product = {
-      id: call.request.id,
-      name: 'Example Product',
-      price: 10.99,
-      description: 'This is an example product.',
-    };
-    callback(null, { product });
+  getProduct: async (call, callback) => {
+    try {
+      const productId = call.request.id;
+
+      // Fetch product details from MySQL database
+      const connection = await pool.getConnection();
+      const [rows] = await connection.query('SELECT * FROM products WHERE name = ?', [productId]);
+      connection.release();
+
+      if (rows.length === 0) {
+        return callback({ code: grpc.status.NOT_FOUND, details: 'Product not found' });
+      }
+
+      const product = rows[0];
+      callback(null, { product });
+    } catch (error) {
+      console.error('Error getting product:', error);
+      callback(error);
+    }
   },
-  getProducts: (call, callback) => {
-    // Logic to fetch all products
-    const products = [
-      { id: '1', name: 'Product 1', price: 19.99, description: 'Description of Product 1' },
-      { id: '2', name: 'Product 2', price: 29.99, description: 'Description of Product 2' },
-      // Add more products as needed
-    ];
-    callback(null, { products });
+  getProducts: async (call, callback) => {
+    try {
+      // Fetch all products from MySQL database
+      const connection = await pool.getConnection();
+      const [rows] = await connection.query('SELECT * FROM products');
+      connection.release();
+
+      const products = rows;
+      callback(null, { products });
+    } catch (error) {
+      console.error('Error getting products:', error);
+      callback(error);
+    }
   },
 };
 
@@ -56,6 +94,5 @@ server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (er
     console.error('Failed to bind server:', err);
     return;
   }
-  console.log(`Server running on port ${port}`);
+  console.log(`Product microservice running on port ${port}`);
 });
-console.log(`Product microservice running on port ${port}`);

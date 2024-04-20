@@ -17,7 +17,11 @@
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "mongoose": "^8.3.2"
+    "mongodb": "^6.5.0",
+    "mongoose": "^8.3.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.9.6",
+    "promise-mysql": "^5.2.0"
   },
   "description": ""
 }

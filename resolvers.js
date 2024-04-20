@@ -18,8 +18,8 @@ const orderProtoDefinition = protoLoader.loadSync(orderProtoPath, {
   defaults: true,
   oneofs: true,
 });
-const productProto = grpc.loadPackageDefinition(productProtoDefinition).product;
-const orderProto = grpc.loadPackageDefinition(orderProtoDefinition).order;
+const productProto = grpc.loadPackageDefinition(productProtoDefinition);
+const orderProto = grpc.loadPackageDefinition(orderProtoDefinition);
 
 // Define the resolvers for GraphQL queries and mutations
 const resolvers = {
@@ -37,6 +37,7 @@ const resolvers = {
         });
       });
     },
+    
     order: (_, { id }) => {
       // Make gRPC call to order microservice to fetch order by ID
       const client = new orderProto.OrderService('localhost:50053', grpc.credentials.createInsecure());

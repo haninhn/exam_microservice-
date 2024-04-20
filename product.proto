@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+
+
 // Definition of the message Product
 message Product {
   string id = 1;

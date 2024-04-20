@@ -36,7 +36,7 @@ const orderProto = grpc.loadPackageDefinition(orderProtoDefinition);
 // Create an ApolloServer instance with the imported schema and resolvers
 const server = new ApolloServer({ typeDefs, resolvers });
 
-// Apply the ApolloServer middleware to the Express application
+// Apply the ApolloServer middleware to the Express applicationsßç
 server.start().then(() => {
   app.use(cors(), bodyParser.json(), expressMiddleware(server));
 });
@@ -81,7 +81,7 @@ app.post('/orders', (req, res) => {
   const client = new orderProto.OrderService('localhost:50053', grpc.credentials.createInsecure());
   const { productId, quantity } = req.body; // Assuming the request body contains the order details
   client.createOrder({ productId, quantity }, (err, response) => {
-    if (err) {
+    if (err) {f
       res.status(500).send(err);
     } else {
       res.json(response.order);
